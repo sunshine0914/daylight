@@ -1,0 +1,134 @@
+#include<iostream>
+using namespace std;
+
+class Node//节点
+{
+private:
+	int data;
+	Node* next;
+public:
+	Node(int x) :data(x), next(NULL) {}//初始化
+	friend class LinkList;//允许使用private类的袁术
+	int GetDate() const
+	{
+		return data;
+	}
+};
+
+class LinkList
+{
+private:
+	Node* head;
+	int length;
+public://构造链表类
+	LinkList() : head(NULL), length(0) {}
+
+	void insertHead(int val)//头插法
+	{
+		Node* newNode = new Node(val);
+		newNode->next = head;
+		head = newNode;
+		length++;
+	}
+
+	void insertAfter(int val)//尾插法
+	{
+		Node* newNode = new Node(val);
+		if (head == NULL)
+		{
+			head = newNode;
+		}
+		else
+		{
+			Node* current = head;
+			while (current->next != NULL)
+			{
+				current = current->next;
+			}
+			current->next = newNode;
+		}
+		length++;
+	}
+
+	void printList()//打印
+	{
+		Node* current = head;
+		while (current != NULL)
+		{
+			cout << current->data << " ";
+			current = current->next;
+		}
+		cout << endl;
+	}
+
+	//插入
+	void insertAtPositions(int pos, int val)
+	{
+		Node* current = head;
+		if (pos == 0)
+		{
+			insertHead(val);
+			length++;
+		}
+		else if (pos == length)
+		{
+			insertAfter(val);
+			length++;
+		}
+		else
+		{
+			for (int i = 0; i < pos - 1; i++)
+			{
+				current = current->next;
+			}
+			Node* newNode = new Node(val);
+			newNode->next = current->next;
+			current->next = newNode;
+			length++;
+		}
+	}
+	//删除
+	void deletevalue(int val)
+	{
+		if (length == 0)
+		{
+			cout << "链表为空" << endl;
+		}
+		else if (head->data == val)
+		{
+			Node* temp = head;
+			head = head->next;
+			delete temp;
+			length--;
+		}
+		else
+		{
+			Node* current = head;
+			while (current->next != NULL && current->next->data != val)
+			{
+				current = current->next;
+			}
+			if (current->next != NULL)
+			{
+				Node* temp = current->next;
+				current->next = current->next->next;
+				delete temp;
+				length--;
+			}
+		}
+	}
+};
+
+int main()
+{
+    LinkList L;
+	L.insertAfter(1);
+	L.insertAfter(2);
+	L.insertAfter(3);
+	L.insertAfter(4);
+	L.insertAfter(5);
+	L.insertAfter(6);
+	cout << "链表内容" << endl;
+	L.printList();
+	return 0;
+}
