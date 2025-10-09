@@ -1,0 +1,108 @@
+#include<iostream>
+using namespace std;
+template <typename T>
+struct StackNode {
+	T date;
+	StackNode* next;
+	StackNode(const T& val) :date(val), next(NULL) {}
+};
+
+template<typename T>
+class LinkedStack
+{
+private:
+	StackNode<T>* top;
+	int StackSize;
+public:
+	LinkedStack() :top(NULL), StackSize(0) {}
+	~LinkedStack()
+	{
+		clear();
+	}
+
+
+	//入栈操作
+	void push(const T& val)
+	{
+		StackNode<T>* newNode = new StackNode<T>(val);
+		newNode->next = top;
+		top = newNode;
+		StackSize++;
+	}
+
+
+
+	//出栈操作
+	T pop()
+	{
+		if (StackSize == 0)
+		{
+			cout << "空" << endl;
+		}
+		StackNode<T>* temp = top;
+		T data = temp->data;
+		top = top->next;
+		delete temp;
+		StackSize--;
+		return data;
+	}
+
+
+	T GetTop()
+	{
+		if (StacckSize == 0)
+		{
+			cout << "空" << endl;
+		}
+		return top->data;
+	}
+
+	int size()
+	{
+		return StackSize;
+	}
+
+	void print() const
+	{
+		StackNode<T>* current = top;
+		while (current = NULL)
+		{
+			cout << current->data<<" ";
+			current = current->next;
+		}
+		cout << endl;
+	}
+
+	T peek() const
+	{
+		return top->data;
+	}
+};
+
+
+int main()
+{
+	LinkedStack<int> stack;
+
+
+	stack.push(10);
+	stack.push(20);
+	stack.push(30);
+	stack.push(40);
+
+	std::cout << "栈顶元素: " << stack.peek() << std::endl;  // 应输出：40
+
+	std::cout << "出栈元素: " << stack.pop() << std::endl;  // 应输出：40
+	std::cout << "出栈后：" << std::endl;
+	stack.print(); 
+	std::cout << "栈的大小: " << stack.size() << std::endl;  // 应输出：3
+
+	// 再出栈两个元素
+	stack.pop();
+	stack.pop();
+	std::cout << "再出栈两个元素后：" << std::endl;
+	stack.print();  // 应输出：10
+
+	stack.pop();
+	return 0;
+}
