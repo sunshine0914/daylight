@@ -1,0 +1,72 @@
+#include<iostream>
+#include<algorithm>
+using namespace std;
+template <typename T>
+class ArrayStack
+{
+private:
+	T* elements;//动态数组
+	int topIndex;//栈顶
+	int capatity;//容量大小
+
+	const int cap = 10;
+
+	void resize()
+	{
+		int newCapatity = 2 * capatity;
+		T* newelements = new T[newCapatity];
+
+		copy(elements, elements + capatity, newelements);
+		delete[]elements;
+
+		elements = newelements;
+		capatity *= 2;
+	}
+
+public:
+	ArrayStack():capatity(cap),topIndex(-1) {
+		elements = new T[capatity];
+	}
+	ArrayStack(int Cap):capatity(Cap),topIndex(-1) {
+		elements = new T[capatity];
+	}
+
+	void push(const T& val)
+	{
+		if (topIndex == capatity - 1)
+		{
+			resize();
+		}
+		elements[++topIndex] = val;
+	}
+
+	void pop()
+	{
+		topIndex--;
+	}
+
+	T peek()
+	{
+		return elements[topIndex];
+	}
+
+	void print()
+	{
+		for (int i = topIndex; i >= 0; i--)
+		{
+			cout << elements[i]<<" ";
+		}
+		cout << endl;
+	}
+};
+
+int main()
+{
+	ArrayStack<int> L(10);
+	L.push(1);
+	L.push(2);
+	L.push(3);
+
+	L.print();
+	return 0;
+}
