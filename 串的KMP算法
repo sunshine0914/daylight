@@ -1,0 +1,86 @@
+#include<iostream>
+using namespace std;
+#define MAXLEN 255
+struct SString
+{
+public:
+	char ch[MAXLEN+1];
+	int length;
+};
+
+void InitString(SString *a,const char* s)
+{
+	int len = strlen(s);
+	a->length = len;
+	for (int i = 0; i < len; i++)
+	{
+		a->ch[i+1] = s[i];
+	}
+}
+
+void getnext(SString S,int next[])
+{
+	next[1] == 0;
+	int i = 0;
+	int j = 0;
+	while (i < S.length)
+	{
+		if (j == 0 || S.ch[i] == S.ch[j])
+		{
+			next[++i] = ++j;
+		}
+		else
+		{
+			j = next[j];
+		}
+	}
+}
+
+int Index_KMP(SString M,SString Z)
+{
+	int i = 1;
+	int j = 1;
+	int next[MAXLEN];
+	getnext(Z, next);
+	while (i <= M.length&&j<=Z.length)
+	{
+		if (j == 0 || Z.ch[i] == M.ch[j])
+		{
+			i++;
+			j++;
+		}
+		else
+		{
+			j = next[j];
+		}
+	}
+	if (j > Z.length)
+	{
+		return i - Z.length;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+void PrintString(SString s, const char* name)
+{
+	printf("%s:", name);
+	for (int i = 1; i <= s.length; i++)
+	{
+		printf("%c", s.ch[i]);
+	}
+}
+
+int main()
+{
+	SString  M, Z;
+	int position;
+	InitString(&Z, "ABABABCD");
+	InitString(&M, "ABUISHUIGSIFGBUIABABABCD");
+	PrintString(Z, "主串");
+	PrintString(M, "子串");
+	position = Index_KMP(M, Z);
+	return 0;
+}
