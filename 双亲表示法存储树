@@ -1,0 +1,109 @@
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+// 1. 定义树的节点结构：存储数据 + 双亲在数组中的索引
+struct TreeNode {
+    string data;   // 节点数据（此处用字符串，可根据需求改为int等）
+    int parent;    // 双亲索引：根节点parent为-1（无父节点），其他节点存父节点在数组中的下标
+};
+
+// 2. 双亲表示法的树类
+class ParentTree {
+private:
+    vector<TreeNode> tree;  // 用vector存储所有节点，模拟数组（动态扩容更灵活）
+public:
+    // 构造函数：初始化根节点
+    ParentTree(string rootData) {
+        TreeNode root;
+        root.data = rootData;
+        root.parent = -1;  // 根节点无父节点，标记为-1
+        tree.push_back(root);
+    }
+
+    // 方法1：添加子节点（指定父节点数据，添加子节点数据）
+    bool addChild(string parentData, string childData) {
+        // 先找到父节点的索引
+        int parentIdx = -1;
+        for (int i = 0; i < tree.size(); i++) {
+            if (tree[i].data == parentData) {
+                parentIdx = i;
+                break;
+            }
+        }
+        // 若父节点不存在，添加失败
+        if (parentIdx == -1) {
+            cout << "父节点 [" << parentData << "] 不存在，添加失败！" << endl;
+            return false;
+        }
+        // 父节点存在，创建子节点并加入树
+        TreeNode child;
+        child.data = childData;
+        child.parent = parentIdx;
+        tree.push_back(child);
+        cout << "成功为 [" << parentData << "] 添加子节点 [" << childData << "]" << endl;
+        return true;
+    }
+
+    // 打印整棵树
+    void printTree() {
+        cout << "\n=== 双亲表示法树结构 ===" << endl;
+        cout << "索引 | 节点数据 | 双亲索引" << endl;
+        cout << "-------------------------" << endl;
+        for (int i = 0; i < tree.size(); i++) {
+            cout << i << "    | " << tree[i].data << "       | " << tree[i].parent << endl;
+        }
+    }
+
+    // 方法3：根据节点数据查找其所有子节点
+    void findChildren(string nodeData) {
+        int nodeIdx = -1;
+        // 先找到目标节点的索引
+        for (int i = 0; i < tree.size(); i++) {
+            if (tree[i].data == nodeData) {
+                nodeIdx = i;
+                break;
+            }
+        }
+        if (nodeIdx == -1) {
+            cout << "节点 [" << nodeData << "] 不存在！" << endl;
+            return;
+        }
+        // 遍历所有节点，找parent为目标节点索引的节点（即子节点）
+        cout << "\n节点 [" << nodeData << "] 的子节点：";
+        bool hasChild = false;
+        for (auto& node : tree) {
+            if (node.parent == nodeIdx) {
+                cout << node.data << " ";
+                hasChild = true;
+            }
+        }
+        if (!hasChild) cout << "无";
+        cout << endl;
+    }
+};
+
+// 主函数：测试树结构
+int main() {
+    // 1. 创建根节点为「A」的树
+    ParentTree tree("A");
+
+    // 2. 逐层添加节点（构建树：A是根，A的子是B/C，B的子是D/E，C的子是F）
+    tree.addChild("A", "B");   // A的子节点B
+    tree.addChild("A", "C");   // A的子节点C
+    tree.addChild("B", "D");   // B的子节点D
+    tree.addChild("B", "E");   // B的子节点E
+    tree.addChild("C", "F");   // C的子节点F
+    tree.addChild("X", "Y");   // 测试：父节点X不存在，添加失败
+
+    // 3. 打印树的存储结构
+    tree.printTree();
+
+    // 4. 查找指定节点的子节点
+    tree.findChildren("A");    // 找A的子节点（B、C）
+    tree.findChildren("B");    // 找B的子节点（D、E）
+    tree.findChildren("F");    // 找F的子节点（无）
+
+    return 0;
+}
