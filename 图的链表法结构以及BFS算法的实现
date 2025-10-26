@@ -1,0 +1,174 @@
+#include <iostream>
+#include <queue>
+#include <vector>
+#include <cstring>
+using namespace std;
+
+#define MaxVertexNum 100  // 最大顶点数
+typedef char VertexType;  // 顶点数据类型
+typedef int InfoType;     // 边权值类型（本题为无权图，可忽略）
+
+// 边/弧节点
+struct ArcNode {
+    int adjvex;           // 边/弧指向的顶点编号
+    ArcNode* next; // 指向下一条边/弧的指针
+    InfoType  info;//权重
+};
+
+// 顶点节点
+typedef struct VNode {
+    VertexType data;      // 顶点信息
+    ArcNode* first;       // 指向第一条边/弧的指针
+} VNode, AdjList[MaxVertexNum];
+
+// 图结构
+typedef struct {
+    AdjList vertices;     // 顶点数组
+    int vexnum;           // 顶点数
+    int arcnum;           // 边/弧数
+} ALGraph;
+
+// 初始化图
+void InitGraph(ALGraph& G, int vexnum) {
+    G.vexnum = vexnum;
+    G.arcnum = 0;
+    for (int i = 0; i < vexnum; i++) {
+        G.vertices[i].data = '0' + i+1; // 示例：顶点数据初始化为'A','B'...
+        G.vertices[i].first = NULL;
+    }
+}
+
+//添加边,添加from和to之间的边(无向图)
+void AddUndirectedEdge(ALGraph& G, int from, int to, InfoType weight = 1)
+{
+    //from to
+    ArcNode* newArc = new ArcNode;
+    newArc->adjvex = to;
+    newArc->info = weight;//边的权重
+    newArc->next = G.vertices[from].first;
+    G.vertices[from].first = newArc;
+
+    //to from
+    ArcNode* newArc = new ArcNode;
+    newArc->adjvex = from;
+    newArc->info = weight;
+    newArc->next = G.vertices[to].first;
+    G.vertices[to].first = newArc;
+
+    G.arcnum += 2;//无向图两条边
+}
+
+//获取第一个邻接节点
+int FirstNeighbor(ALGraph &G, int  u)
+{
+    return G.vertices[u].first->adjvex;
+}
+
+//获取下一个邻接节点   w是u的一个邻接点
+//这就是求u的邻接点w的下一个邻接点
+int NextNeighbor(ALGraph& G, int u, int w)
+{
+    if (u < 0 || u >= G.vexnum)return -1;
+    ArcNode* p = G.vertices[u].first;
+    while (p && p->adjvex != w)
+    {
+        p = p->next;
+    }
+    if (p && p->next)
+    {
+        return p->next->adjvex;
+    }
+    return -1;
+}
+
+// 队列操作：入队
+void EnQueue(queue<int>& Q, int u) {
+    Q.push(u);
+}
+
+// 队列操作：出队
+void DeQueue(queue<int>& Q, int& u) {
+    u = Q.front();
+    Q.pop();
+}
+
+// 队列判空
+bool isEmpty(queue<int>& Q) {
+    return Q.empty();
+}
+
+//BFS求单源最短路径
+void BFS_MIN_Distance(ALGraph& G, int u)
+{
+    vector<int>d(G.vexnum, INT_MAX);//存储最短距离，初始为无穷大
+    vector<int> path(G.vexnum, -1);    // 存储路径的前驱节点
+    vector<bool> visited(G.vexnum, false); // 标记是否访问过
+    queue<int> Q;                      // BFS队列
+
+    d[u] = 0;//起始节点
+    visited[u] = true;
+    EnQueue(Q, u);
+
+    while (!isEmpty(Q))
+    {
+        int u;
+        DeQueue(Q, u);
+
+        for (int w = FirstNeighbor(G, u); w >= 0; w = NextNeighbor(G, u, w))
+        {
+            if (!visited[w])
+            {
+                d[w] = d[u] + 1;    // 路径长度+1
+                path[w] = u;        // 记录前驱节点
+                visited[w] = true;  // 标记为已访问
+                EnQueue(Q, w);      // 入队
+            }
+        }
+    }
+
+    // 输出结果
+    cout << "顶点 " << G.vertices[u].data << " 到各顶点的最短距离：" << endl;
+    for (int i = 0; i < G.vexnum; i++) {
+        cout << "到顶点 " << G.vertices[i].data << " 的距离：";
+        if (d[i] == INT_MAX) {
+            cout << "∞" << endl;
+        }
+        else {
+            cout << d[i] << "，路径前驱：" << (path[i] == -1 ? "无" : string(1, G.vertices[path[i]].data)) << endl;
+        }
+    }
+}
+
+void DestroyGraph(ALGraph& G)
+{
+    for (int i = 0; i < G.vexnum; i++)
+    {
+        ArcNode* p = G.vertices[i].first;
+        while (p)
+        {
+            ArcNode* temp = p;
+            p=p->next;
+            delete temp;//delete是用来删除用new分配的内存，再这个程序里面，使用new给边分配了内存，所以要删除的就是边
+        }
+    }
+}
+
+int main() {
+    ALGraph G;
+    InitGraph(G, 8); // 初始化8个顶点的无向图（顶点1-8）
+
+    // 构建图中结构：顶点1-8对应索引0-7
+    AddUndirectedEdge(G, 0, 1); // 1-2
+    AddUndirectedEdge(G, 0, 4); // 1-5
+    AddUndirectedEdge(G, 1, 5); // 2-6
+    AddUndirectedEdge(G, 2, 5); // 3-7
+    AddUndirectedEdge(G, 2, 3); // 3-4
+    AddUndirectedEdge(G, 3, 5); // 4-7
+    AddUndirectedEdge(G, 5, 6); // 7-8
+
+    // 从顶点2（索引1）开始求最短路径
+    BFS_MIN_Distance(G, 1);
+
+    DestroyGraph(G);
+    return 0;
+}
