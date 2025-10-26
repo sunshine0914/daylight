@@ -1,0 +1,365 @@
+#include<iostream>
+#include<vector>
+#include<queue>
+#include<string>
+#include<algorithm>
+using namespace std;
+
+struct TreeNode {
+    string data;                  // 节点数据（如文件名、部门名）
+    vector<TreeNode*> children;   // 子节点列表（孩子表示法）
+    TreeNode* parent;
+    // 构造函数：初始化节点数据
+    TreeNode(const string& val, TreeNode* p = NULL) : data(val), parent(p) {}
+};
+
+class Tree {
+private:
+    TreeNode* root;
+
+    // 递归查找节点
+    TreeNode* findNode(TreeNode* current, const string& dat) {
+        if (!current) return NULL;
+        if (current->data == dat) return current;
+        for (TreeNode* child : current->children) {
+            TreeNode* res = findNode(child, dat);
+            if (res) return res;
+        }
+        return NULL;
+    }
+
+    // 打印带缩进的节点
+    void printWithIndent(const string& data, int depth, const string& type) {
+        for (int i = 0; i < depth; i++) {
+            cout << "  ";  // 增加缩进空格数，更清晰
+        }
+        cout << type << "：" << data << endl;
+    }
+
+    // 递归计算树的深度（修复原逻辑错误）
+    int calculateDepth(TreeNode* current) {
+        if (!current) return 0;
+        int maxDepth = 0;
+        for (TreeNode* child : current->children) {  // 原代码错误使用root->children
+            maxDepth = max(maxDepth, calculateDepth(child));
+        }
+        return maxDepth + 1;
+    }
+
+    // 递归计算节点总数
+    int countNodes(TreeNode* current) {
+        if (!current) return 0;
+        int count = 1;
+        for (TreeNode* child : current->children) {
+            count += countNodes(child);
+        }
+        return count;
+    }
+
+    // 递归前序遍历
+    void preOrder(TreeNode* current, int depth) {
+        if (!current) return;
+        printWithIndent(current->data, depth, "前序");
+        for (TreeNode* child : current->children) {
+            preOrder(child, depth + 1);
+        }
+    }
+
+    // 递归中序遍历（适用于多叉树的中间位置遍历）
+    void inOrder(TreeNode* current, int depth) {
+        if (!current) return;
+        int half = current->children.size() / 2;
+        // 遍历前半部分子节点
+        for (int i = 0; i < half; i++) {
+            inOrder(current->children[i], depth + 1);
+        }
+        // 访问当前节点
+        printWithIndent(current->data, depth, "中序");
+        // 遍历后半部分子节点
+        for (int i = half; i < current->children.size(); i++) {
+            inOrder(current->children[i], depth + 1);
+        }
+    }
+
+    // 递归后序遍历
+    void postOrder(TreeNode* current, int depth) {
+        if (!current) return;
+        for (TreeNode* child : current->children) {
+            postOrder(child, depth + 1);
+        }
+        printWithIndent(current->data, depth, "后序");
+    }
+
+    // 层次遍历（广度优先）
+    void levelOrder(TreeNode* current) {
+        if (!current) return;
+        queue<pair<TreeNode*, int>> q;  // 节点和深度的对
+        q.push({current, 0});
+        while (!q.empty()) {
+            auto [node, depth] = q.front();  // C++17结构化绑定
+            q.pop();
+            printWithIndent(node->data, depth, "层次");
+            for (TreeNode* child : node->children) {
+                q.push({child, depth + 1});
+            }
+        }
+    }
+
+    // 递归销毁树
+    void destroyTree(TreeNode* current) {
+        if (!current) return;
+        for (TreeNode* child : current->children) {
+            destroyTree(child);
+        }
+        delete current;
+    }
+
+    // 递归查找从current到target的路径
+    bool findPath(TreeNode* current, const string& target, vector<string>& path) {
+        if (!current) return false;
+        path.push_back(current->data);
+        if (current->data == target) return true;
+        for (TreeNode* child : current->children) {
+            if (findPath(child, target, path)) return true;
+        }
+        path.pop_back();  // 回溯
+        return false;
+    }
+
+public:
+    Tree() : root(NULL) {}  // 初始化
+
+    ~Tree() {  // 析构函数
+        destroyTree(root);
+        root = NULL;
+    }
+
+    // 创建根节点
+    bool createRoot(const string& rootData) {  // 修正函数名大写规范
+        if (root) {
+            cout << "根节点已存在！" << endl;
+            return false;
+        }
+        root = new TreeNode(rootData);
+        return true;
+    }
+
+    // 判断是否为空
+    bool isEmpty() const {
+        return root == NULL;
+    }
+
+    // 给父节点添加子节点
+    bool addChild(const string& parentData, const string& childData) {
+        if (isEmpty()) {
+            cout << "树未初始化！" << endl;
+            return false;
+        }
+        TreeNode* parent = findNode(root, parentData);
+        if (!parent) {  // 补充父节点不存在的判断
+            cout << "父节点【" << parentData << "】不存在！" << endl;
+            return false;
+        }
+        // 检查子节点是否已存在
+        for (TreeNode* child : parent->children) {
+            if (child->data == childData) {
+                cout << "子节点【" << childData << "】已存在！" << endl;
+                return false;
+            }
+        }
+        // 添加子节点（设置父指针）
+        parent->children.push_back(new TreeNode(childData, parent));
+        cout << "添加子节点【" << childData << "】到【" << parentData << "】成功" << endl;
+        return true;
+    }
+
+    // 删除指定节点
+    bool deleteNode(const string& target) {
+        if (isEmpty()) {
+            cout << "树未初始化！" << endl;
+            return false;
+        }
+        if (target == root->data) {  // 删除根节点
+            destroyTree(root);
+            root = NULL;
+            cout << "根节点【" << target << "】已删除" << endl;
+            return true;
+        }
+        // 查找目标节点
+        TreeNode* targetNode = findNode(root, target);
+        if (!targetNode) {
+            cout << "节点【" << target << "】不存在！" << endl;
+            return false;
+        }
+        // 查找其父节点
+        TreeNode* parent = targetNode->parent;
+        auto it = find(parent->children.begin(), parent->children.end(), targetNode);
+        if (it != parent->children.end()) {
+            destroyTree(*it);
+            parent->children.erase(it);
+            cout << "节点【" << target << "】及其子树已删除" << endl;
+            return true;
+        }
+        return false;
+    }
+
+    // 修改节点数据
+    bool modifyNode(const string& oldData, const string& newData) {
+        if (isEmpty()) {
+            cout << "树未初始化！" << endl;
+            return false;
+        }
+        TreeNode* node = findNode(root, oldData);
+        if (!node) {
+            cout << "节点【" << oldData << "】不存在！" << endl;
+            return false;
+        }
+        if (findNode(root, newData) && newData != oldData) {  // 检查新名称是否已存在
+            cout << "新节点名【" << newData << "】已存在！" << endl;
+            return false;
+        }
+        node->data = newData;
+        cout << "节点【" << oldData << "】已修改为【" << newData << "】" << endl;
+        return true;
+    }
+
+    // 前序遍历公共接口
+    void preOrderTraversal() {
+        if (isEmpty()) {
+            cout << "树为空，无法遍历！" << endl;
+            return;
+        }
+        cout << "\n前序遍历结果：" << endl;
+        preOrder(root, 0);
+    }
+
+    // 中序遍历公共接口
+    void inOrderTraversal() {
+        if (isEmpty()) {
+            cout << "树为空，无法遍历！" << endl;
+            return;
+        }
+        cout << "\n中序遍历结果：" << endl;
+        inOrder(root, 0);
+    }
+
+    // 后序遍历公共接口
+    void postOrderTraversal() {
+        if (isEmpty()) {
+            cout << "树为空，无法遍历！" << endl;
+            return;
+        }
+        cout << "\n后序遍历结果：" << endl;
+        postOrder(root, 0);
+    }
+
+    // 层次遍历公共接口
+    void levelOrderTraversal() {
+        if (isEmpty()) {
+            cout << "树为空，无法遍历！" << endl;
+            return;
+        }
+        cout << "\n层次遍历结果：" << endl;
+        levelOrder(root);
+    }
+
+    // 获取树的深度
+    int getDepth() {
+        if (isEmpty()) {
+            cout << "树为空，深度为0" << endl;
+            return 0;
+        }
+        int depth = calculateDepth(root);
+        cout << "\n树的深度为：" << depth << endl;
+        return depth;
+    }
+
+    // 获取树的总节点数
+    int getNodeCount() {
+        if (isEmpty()) {
+            cout << "树为空，节点数为0" << endl;
+            return 0;
+        }
+        int count = countNodes(root);
+        cout << "树的总节点数为：" << count << endl;
+        return count;
+    }
+
+    // 查找指定节点的父节点
+    string findParent(const string& target) {
+        if (isEmpty()) return "树为空";
+        if (target == root->data) return "根节点无父节点";
+        TreeNode* node = findNode(root, target);
+        return node ? node->parent->data : "节点不存在";
+    }
+
+    // 查找从根节点到目标节点的路径
+    vector<string> getPath(const string& target) {
+        vector<string> path;
+        if (isEmpty()) {
+            cout << "树为空，无路径" << endl;
+            return path;
+        }
+        if (findPath(root, target, path)) {
+            cout << "\n从根到【" << target << "】的路径：";
+            for (size_t i = 0; i < path.size(); ++i) {
+                cout << path[i] << (i == path.size() - 1 ? "" : " -> ");
+            }
+            cout << endl;
+        } else {
+            cout << "节点【" << target << "】不存在，无路径" << endl;
+        }
+        return path;
+    }
+
+    // 判断目标节点是否为叶子节点（无children）
+    bool isLeaf(const string& target) {
+        TreeNode* node = findNode(root, target);
+        if (!node) {
+            cout << "节点【" << target << "】不存在！" << endl;
+            return false;
+        }
+        return node->children.empty();
+    }
+};
+
+int main() {
+    Tree dirTree;
+
+    // 1. 基本操作
+    dirTree.createRoot("C盘");  // 修正根节点名称大小写（原代码混用C盘和c盘）
+    cout << "树是否为空：" << (dirTree.isEmpty() ? "是" : "否") << endl;
+
+    // 2. 添加节点
+    dirTree.addChild("C盘", "用户");
+    dirTree.addChild("C盘", "Program Files");
+    dirTree.addChild("用户", "Administrator");
+    dirTree.addChild("Administrator", "文档");
+    dirTree.addChild("Administrator", "桌面");
+    dirTree.addChild("Program Files", "Chrome");
+    dirTree.addChild("桌面", "截图");  // 新增一层
+
+    // 3. 遍历操作
+    dirTree.preOrderTraversal();
+    dirTree.inOrderTraversal();
+    dirTree.postOrderTraversal();
+    dirTree.levelOrderTraversal();
+
+    // 4. 查询操作
+    dirTree.getDepth();
+    dirTree.getNodeCount();
+    cout << "\n【文档】的父节点：" << dirTree.findParent("文档") << endl;
+    cout << "【Google Chrome】是否为叶子节点：" << (dirTree.isLeaf("Chrome") ? "是" : "否") << endl;
+    dirTree.getPath("截图");
+
+    // 5. 修改节点
+    dirTree.modifyNode("Chrome", "Google Chrome");
+    dirTree.getPath("Google Chrome");  // 验证修改后的路径
+
+    // 6. 删除节点（测试删除"桌面"及其子节点"截图"）
+    dirTree.deleteNode("桌面");
+    dirTree.preOrderTraversal();  // 验证删除结果
+    dirTree.getNodeCount();       // 验证节点数变化
+
+    return 0;
+}
