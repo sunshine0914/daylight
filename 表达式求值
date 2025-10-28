@@ -1,0 +1,176 @@
+实验内容：表达式求值问题。
+这里限定的表达式求值问题是： 用户输入一个包含“+”、“-”、“*”、“/”、正整数和圆括号的合法数学表达式，计算该表达式的运算结果。
+算术表达式求值过程是： STEP 1：先将算术表达式转换成后缀表达式。
+                       STEP 2：然后对该后缀表达式求值。
+实验说明：在设计相关算法中用到栈，这里采用顺序栈存储结构。
+#include<iostream>
+#include<string>
+using namespace std;
+
+template<typename T>
+class ArrayStack {
+public:
+    T* arr;
+    int top;
+    int capacity;
+
+    // 构造函数：初始化栈
+    ArrayStack(int cap = 100) : top(0), capacity(cap) {
+        arr = new T[capacity];
+    }
+
+    // 析构函数：释放内存
+    ~ArrayStack() {
+        delete[] arr;
+    }
+
+    // 入栈
+    void push(T a) {
+        if (top < capacity) {  // 防止栈溢出
+            arr[top] = a;
+            top++;
+        }
+    }
+
+    // 出栈（通过引用返回元素）
+    bool pop(T& elem) {
+        if (top > 0) {  // 防止栈空
+            top--;
+            elem = arr[top];
+            return true;
+        }
+        return false;  // 栈空返回失败
+    }
+
+    // 获取栈顶元素（不弹出）
+    bool getTop(T& elem) {
+        if (top > 0) {
+            elem = arr[top - 1];
+            return true;
+        }
+        return false;  // 栈空返回失败
+    }
+
+    // 判断运算符优先级（a是栈顶运算符，b是当前运算符）
+    char Precede(char a, char b) {
+        if ((a == '+' || a == '-') && (b == '*' || b == '/')) return '<';
+        if ((a == '*' || a == '/') && (b == '+' || b == '-')) return '>';
+        if ((a == '*' || a == '/') && (b == '*' || b == '/')) return '>';  // 左结合
+        if (a == '(' || (a == '=' && b == '(')) return '<';
+        if (a == '(' && b == ')') return '=';
+        if (a == '=' && b == ')') return '>';
+        if (a == '=' && b == '\0') return '>';
+        return ' ';
+    }
+
+    // 中缀表达式转后缀表达式
+    string infixToPostfix(string val) {
+        ArrayStack<char> op;  // 运算符栈（明确指定为char类型）
+        op.push('=');  // 压入哨兵，注意是单引号（字符）
+        string postfix;  // 后缀表达式结果
+
+        int i = 0;
+        while (i < val.length()) {
+            char ch = val[i];
+            if (isdigit(ch)) {  // 处理数字（0-9）
+                // 连续读取多位数
+                while (i < val.length() && isdigit(val[i])) {
+                    postfix += val[i];
+                    i++;
+                }
+                postfix += '#';  // 数字结束标记
+            } else {  // 处理运算符
+                char topOp;
+                op.getTop(topOp);  // 获取栈顶运算符
+                switch (Precede(topOp, ch)) {
+                    case '<':  // 栈顶优先级低，当前运算符入栈
+                        op.push(ch);
+                        i++;  // 移动到下一个字符
+                        break;
+                    case '=':  // 括号匹配，弹出左括号
+                        op.pop(topOp);  // 弹出'('，不加入后缀表达式
+                        i++;  // 移动到下一个字符（跳过')'）
+                        break;
+                    case '>':  // 栈顶优先级高，弹出栈顶到后缀表达式
+                        op.pop(topOp);
+                        postfix += topOp;  // 加入后缀表达式
+                        // 不移动i，继续判断当前字符与新栈顶的优先级
+                        break;
+                }
+            }
+        }
+
+        // 弹出栈中剩余运算符（除哨兵'='）
+        char temp;
+        while (op.top > 1) {  // 保留哨兵'='（top=1时只剩哨兵）
+            op.pop(temp);
+            postfix += temp;
+        }
+
+        return postfix;
+    }
+
+    // 后缀表达式求值
+    int evaluatePostfix(string val) {
+        ArrayStack<int> numStack;  // 操作数栈（明确为int类型）
+        int i = 0;
+
+        while (i < val.length()) {
+            char ch = val[i];
+            if (isdigit(ch)) {  // 处理数字
+                int num = 0;
+                // 连续读取多位数
+                while (i < val.length() && isdigit(val[i])) {
+                    num = num * 10 + (val[i] - '0');  // 字符转数字
+                    i++;
+                }
+                numStack.push(num);
+                i++;  // 跳过数字结束标记'#'
+            } else {  // 处理运算符
+                int a, b, res;
+                // 弹出两个操作数（注意顺序：后弹出的是左操作数）
+                numStack.pop(a);  // 右操作数
+                numStack.pop(b);  // 左操作数
+                switch (ch) {
+                    case '+': res = b + a; break;
+                    case '-': res = b - a; break;
+                    case '*': res = b * a; break;
+                    case '/': 
+                        if (a == 0) {
+                            cout << "错误：除数不能为0" << endl;
+                            return 0;
+                        }
+                        res = b / a; 
+                        break;
+                    default: res = 0;  // 无效运算符
+                }
+                numStack.push(res);  // 结果入栈
+                i++;  // 移动到下一个字符
+            }
+        }
+
+        // 栈顶元素即为结果
+        int result;
+        numStack.pop(result);
+        return result;
+    }
+};
+
+// 主函数：测试表达式转换与求值
+int main() {
+    ArrayStack<char> stack;  // 实例化栈对象（模板参数可任意，此处用char）
+    string exp;
+
+    cout << "请输入数学表达式（支持+、-、*、/、括号和正整数）：";
+    cin >> exp;
+
+    // 中缀转后缀
+    string postfix = stack.infixToPostfix(exp);
+    cout << "转换后的后缀表达式：" << postfix << endl;
+
+    // 后缀求值
+    int result = stack.evaluatePostfix(postfix);
+    cout << "表达式计算结果：" << result << endl;
+
+    return 0;
+}
