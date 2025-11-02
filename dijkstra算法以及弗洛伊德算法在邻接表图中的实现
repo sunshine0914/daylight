@@ -1,0 +1,444 @@
+#include<iostream>
+#include<queue>
+#include<vector>
+#include<stack>
+#include<queue>
+using namespace std;
+#define MaxVertexNum 100  // 最大顶点数
+typedef char VertexType;  // 顶点数据类型（示例用char）
+typedef int InfoType;     // 边的权重类型
+
+// 边/弧节点
+struct ArcNode {
+    int adjvex;           // 边/弧指向的顶点编号
+    ArcNode* next;        // 指向下一条边/弧的指针
+    InfoType info;        // 边的权重
+};
+
+// 顶点节点
+typedef struct VNode {
+    VertexType data;      // 顶点信息
+    ArcNode* first;       // 指向第一条边/弧的指针
+} VNode, AdjList[MaxVertexNum];
+
+// 图结构
+typedef struct {
+    AdjList vertices;     // 顶点数组
+    int vexnum;           // 顶点数
+    int arcnum;           // 边/弧数
+} ALGraph;
+
+const InfoType INF = numeric_limits<InfoType>::max();
+
+//初始化图
+void InitGraph(ALGraph& G,int n)
+{
+    G.vexnum = n;
+    G.arcnum = 0;
+    for (int i = 0; i < n; i++)
+    {
+        G.vertices[i].data = 'A' + i;
+        G.vertices[i].first = NULL;
+    }
+}
+
+//添加有向边,头插法
+void AddDirectedEdge(ALGraph& G, int from, int to, InfoType info)
+{
+    if (from < 0 || from >= G.vexnum || to < 0 || to >= G.vexnum) {
+        cerr << "顶点索引越界！" << endl;
+        return;
+    }
+    ArcNode* newArc = new ArcNode;
+    newArc->adjvex = to;
+    newArc->info = info;
+    newArc->next = G.vertices[from].first;
+    G.vertices[from].first = newArc;
+    G.arcnum++;
+}
+
+// 添加无向边（双向添加）
+void AddUndirectedEdge(ALGraph& G, int v1, int v2, InfoType info) {
+    AddDirectedEdge(G, v1, v2, info);
+    AddDirectedEdge(G, v2, v1, info);
+}
+
+//打印邻接表结构
+void PrintAdjList(ALGraph& G)
+{
+    cout << "\n图的邻接表结构：" << endl;
+    for (int i = 0; i < G.vexnum; i++)
+    {
+        cout << "顶点 " << G.vertices[i].data << "(" << i << ") 连接的边：";
+        ArcNode* p = G.vertices[i].first;
+        while (p != NULL)
+        {
+            cout << "(" << G.vertices[p->adjvex].data << "(" << p->adjvex << "), 权重=" << p->info << ") ";
+            p = p->next;
+        }
+    }
+}
+
+void DFSRecursive(const ALGraph& G, int v, vector<bool>& visited)
+{
+    visited[v] = true;
+    ArcNode* p = G.vertices[v].first;
+
+    while (p!=NULL)
+    {
+        int w = p->adjvex;
+        if (!visited[w])
+        {
+            DFSRecursive(G, w, visited);
+        }
+    }
+    p=p->next;
+}
+
+
+void DFS(ALGraph& G, int start)
+{
+    if (start < 0 || start >= G.vexnum)
+    {
+        cout << "起点索引无效！" << endl;
+        return;
+    }
+
+    vector<bool> visited(G.vexnum, false);
+
+    DFSRecursive(G,start,visited);
+    cout << endl;
+}
+
+//广度优先
+void BFS(ALGraph& G, int start)
+{
+    vector<bool> visited(G.vexnum,false) ;
+    queue<int> q;
+    q.push(start);
+    visited[start] = true;
+    while (q.empty())
+    {
+        int v = q.front();
+        q.pop();
+        cout << G.vertices[v].data << "(" << v << ") ";
+        ArcNode* p = G.vertices[v].first;
+        while (p != NULL)
+        {
+            int w = p->adjvex;
+            if (!visited[w])
+            {
+                visited[w] = true;
+                q.push(w);
+            }
+            p=p->next;
+        }
+    }
+    cout << endl;
+}
+
+
+// 打印路径辅助函数（基于前驱数组）
+void PrintPath(const vector<int>& prev, int start, int end, const ALGraph& G)
+{
+    if (start == end)
+    {
+        cout << G.vertices[start].data;
+      
+    }
+    if (prev[end] == -1)
+    {
+        cout << "没有通路" << endl;
+    }
+    stack<int> pathstack;
+    pathstack.push(end);
+    int u = end;
+    while (u!=start)
+    {
+        pathstack.push(prev[u]);
+        u = prev[u];
+    }
+    pathstack.push(start);
+    while (!pathstack.empty())
+    {
+        cout << G.vertices[pathstack.top()].data;
+        pathstack.pop();
+        if (!pathstack.empty())
+        {
+            cout << "->";
+        }
+    }
+
+}
+
+
+//dijkstra算法
+void Dijkstra(ALGraph& G, int start)
+{
+    if (start < 0 || start >= G.vexnum) {
+        cerr << "起点索引无效！" << endl;
+        return;
+    }
+    
+    vector<InfoType> dist(G.vexnum, INF);  // 起点到各顶点的最短距离
+    vector<int> prev(G.vexnum, -1);        // 前驱顶点
+    vector<bool> visited(G.vexnum, false); // 标记是否已确定最短路径
+    dist[start] = 0;
+
+    // 迭代n-1次（确定其余顶点的最短路径）
+    for (int i = 0; i < G.vexnum - 1; ++i)
+    {
+        // 步骤1：找到未访问且距离最小的顶点u
+        int u = -1;
+        InfoType minDist = INF;
+        for (int v = 0; v < G.vexnum; ++v)
+        {
+            if (!visited[v] && dist[v] < minDist) 
+            {
+                minDist = dist[v];
+                u = v;
+            }
+        }
+
+        if (u == -1) break;  // 剩余顶点不可达
+        visited[u] = true;   // 标记u为已确定
+
+        // 步骤2：松弛操作，更新u的邻接顶点
+        ArcNode* p = G.vertices[u].first;
+        while (p != nullptr) 
+        {
+            int v = p->adjvex;
+            if (!visited[v] && dist[u] != INF && dist[u] + p->info < dist[v]) 
+            {
+                dist[v] = dist[u] + p->info;
+                prev[v] = u;
+            }
+            p = p->next;
+        }
+    }
+    cout << "\n迪杰斯特拉算法（起点=" << G.vertices[start].data << "）：" << endl;
+    cout << "顶点\t最短距离\t路径" << endl;
+    for (int v = 0; v < G.vexnum; ++v) {
+        cout << G.vertices[v].data << "\t";
+        if (dist[v] == INF) {
+            cout << "不可达\t";
+        }
+        else {
+            cout << dist[v] << "\t\t";
+            PrintPath(prev, start, v, G);
+        }
+        cout << endl;
+    }
+}
+
+// 打印路径辅助函数（基于二维前驱数组，用于弗洛伊德算法）
+void PrintPath(const vector<vector<int>>& prev, int start, int end, const ALGraph& G) {
+    if (start == end)
+    {
+        cout << G.vertices[start].data;
+        return;
+    }
+    if (prev[start][end] == -1) 
+    {
+        cout << "无路径";
+        return;
+    }
+    stack<int> pathStack;
+    int cur = end;
+    while (cur != start)
+    {
+        pathStack.push(cur);
+        cur = prev[start][cur];
+    }
+    pathStack.push(start);
+    while (!pathStack.empty())
+    {
+        cout << G.vertices[pathStack.top()].data;
+        pathStack.pop();
+        if (!pathStack.empty()) cout << "->";
+    }
+}
+
+// 弗洛伊德算法（多源最短路径）
+void Floyd(const ALGraph& G)
+{
+    // dist[i][j]：i到j的最短距离
+    vector<vector<InfoType>> dist(G.vexnum, vector<InfoType>(G.vexnum, INF));
+    // prev[i][j]：i到j的路径中j的前驱
+    vector<vector<int>> prev(G.vexnum, vector<int>(G.vexnum, -1));
+    //初始化距离矩阵
+    for (int i = 0; i < G.vexnum; i++)
+    {
+        dist[i][i] = 0;
+        ArcNode* p = G.vertices[i].first;
+        while (p!= NULL)
+        {
+            int j = p->adjvex;
+            dist[i][j] = p->info;
+            prev[i][j] = i;
+            p = p->next;
+        }
+    }
+
+    // 三重循环更新最短路径（k为中间顶点）
+    for (int k = 0; k < G.vexnum; k++)
+    {
+        for (int i = 0; i < G.vexnum; i++)
+        {
+            for (int j = 0; j < G.vexnum; j++)
+            {
+                if (dist[i][k]!=INF&&dist[k][j]!=INF&&dist[i][j] > dist[i][k] + dist[k][j])
+                {
+                    dist[i][j] = dist[i][k] + dist[k][j];
+                    prev[i][j] = prev[k][j];
+                }
+            }
+        }
+    }
+
+    // 输出结果
+    cout << "\n弗洛伊德算法（多源最短路径）：" << endl;
+    cout << "起点->终点\t最短距离\t路径" << endl;
+    for (int i = 0; i < G.vexnum; ++i)
+    {
+        for (int j = 0; j < G.vexnum; ++j)
+        {
+            if (i != j)
+            {  // 跳过自身到自身的路径
+                cout << G.vertices[i].data << "->" << G.vertices[j].data << "\t\t";
+                if (dist[i][j] == INF)
+                {
+                    cout << "不可达\t";
+                }
+                else
+                {
+                    cout << dist[i][j] << "\t\t";
+                    PrintPath(prev, i, j, G);
+                }
+                cout << endl;
+            }
+        }
+    }
+}
+
+    // 释放图的内存（避免内存泄漏）
+    void DestroyGraph(ALGraph & G) 
+    {
+        for (int i = 0; i < G.vexnum; ++i)
+        {
+            ArcNode* p = G.vertices[i].first;
+            while (p != nullptr)
+            {
+                ArcNode* temp = p;
+                p = p->next;
+                delete temp;
+            }
+            G.vertices[i].first = nullptr;
+        }
+        G.vexnum = 0;
+        G.arcnum = 0;
+    }
+
+    // 实例1：图的创建与邻接表打印
+    void testGraphCreate() {
+        ALGraph G;
+        InitGraph(G, 3); // 3个顶点：A(0)、B(1)、C(2)
+        AddUndirectedEdge(G, 0, 1, 5); // A-B 权重5
+        AddUndirectedEdge(G, 1, 2, 3); // B-C 权重3
+        AddUndirectedEdge(G, 0, 2, 10); // A-C 权重10
+        PrintAdjList(G);
+        DestroyGraph(G);
+    }
+
+    // 实例2：测试DFS遍历
+    void testDFS() {
+        ALGraph G;
+        InitGraph(G, 4); // 顶点A(0)、B(1)、C(2)、D(3)
+        AddDirectedEdge(G, 0, 1, 1); // A->B
+        AddDirectedEdge(G, 1, 2, 1); // B->C
+        AddDirectedEdge(G, 2, 3, 1); // C->D
+        AddDirectedEdge(G, 3, 0, 1); // D->A（形成环）
+        DFS(G, 0); // 从A出发，预期遍历：A->B->C->D
+        DestroyGraph(G);
+    }
+
+    // 实例3：测试BFS遍历
+    void testBFS() {
+        ALGraph G;
+        InitGraph(G, 4); // 顶点A(0)、B(1)、C(2)、D(3)
+        AddUndirectedEdge(G, 0, 1, 1); // A-B
+        AddUndirectedEdge(G, 0, 2, 1); // A-C
+        AddUndirectedEdge(G, 1, 3, 1); // B-D
+        AddUndirectedEdge(G, 2, 3, 1); // C-D
+        BFS(G, 0); // 从A出发，预期遍历：A->B->C->D
+        DestroyGraph(G);
+    }
+
+    // 实例4：测试迪杰斯特拉（有不可达节点）
+    void testDijkstra() {
+        ALGraph G;
+        InitGraph(G, 4); // 顶点A(0)、B(1)、C(2)、D(3)
+        AddDirectedEdge(G, 0, 1, 2); // A->B（权重2）
+        AddDirectedEdge(G, 1, 2, 3); // B->C（权重3）
+        AddDirectedEdge(G, 0, 3, 5); // A->D（权重5）
+        Dijkstra(G, 0); // 预期：A->B->C（总权重5），A->D（权重5），D不可达其他节点
+        DestroyGraph(G);
+    }
+
+    // 实例5：测试弗洛伊德（有环、多路径）
+    void testFloyd() {
+        ALGraph G;
+        InitGraph(G, 3); // 顶点A(0)、B(1)、C(2)
+        AddDirectedEdge(G, 0, 1, 1); // A->B（权重1）
+        AddDirectedEdge(G, 1, 2, 2); // B->C（权重2）
+        AddDirectedEdge(G, 0, 2, 5); // A->C（权重5）
+        AddDirectedEdge(G, 2, 1, 1); // C->B（权重1）
+        Floyd(G);
+        // 预期：A->B->C（总权重3）比直接A->C（5）更短；C->B->A 不可达（无路径）
+        DestroyGraph(G);
+    }
+
+    // 实例6：原代码的复杂有向图测试
+    void testOriginalGraph() {
+        ALGraph G;
+        InitGraph(G, 5);  // 顶点0(A),1(B),2(C),3(D),4(E)
+        AddDirectedEdge(G, 0, 1, 10);  // A->B, 权重10
+        AddDirectedEdge(G, 0, 4, 5);   // A->E, 权重5
+        AddDirectedEdge(G, 1, 2, 1);   // B->C, 权重1
+        AddDirectedEdge(G, 1, 4, 2);   // B->E, 权重2
+        AddDirectedEdge(G, 2, 3, 4);   // C->D, 权重4
+        AddDirectedEdge(G, 3, 0, 7);   // D->A, 权重7
+        AddDirectedEdge(G, 3, 2, 6);   // D->C, 权重6
+        AddDirectedEdge(G, 4, 1, 3);   // E->B, 权重3
+        AddDirectedEdge(G, 4, 2, 9);   // E->C, 权重9
+        AddDirectedEdge(G, 4, 3, 2);   // E->D, 权重2
+        PrintAdjList(G);
+        DFS(G, 0);
+        BFS(G, 0);
+        Dijkstra(G, 0);
+        Floyd(G);
+        DestroyGraph(G);
+    }
+
+    int main() {
+        int choice;
+        cout << "选择测试用例：\n";
+        cout << "1. 图的创建与邻接表打印\n";
+        cout << "2. 深度优先遍历（DFS）\n";
+        cout << "3. 广度优先遍历（BFS）\n";
+        cout << "4. 迪杰斯特拉算法（单源最短路径）\n";
+        cout << "5. 弗洛伊德算法（多源最短路径）\n";
+        cout << "6. 原代码复杂有向图测试\n";
+        cin >> choice;
+
+        switch (choice) {
+        case 1: testGraphCreate(); break;
+        case 2: testDFS(); break;
+        case 3: testBFS(); break;
+        case 4: testDijkstra(); break;
+        case 5: testFloyd(); break;
+        case 6: testOriginalGraph(); break;
+        default: cout << "无效选择！\n";
+        }
+        return 0;
+    }
