@@ -1,0 +1,112 @@
+#include<iostream>
+#include<algorithm>
+#include<queue>
+#include<cstring>
+using namespace std;
+const int M = 1001;
+
+struct Node
+{
+	int x, y;
+	Node(int x, int y) :x(x), y(y) {}
+};
+
+
+bool check(int p[][M], int mai, int n, int m)
+{
+	bool  visit[M][M];
+	memset(visit, false, sizeof(visit));
+	queue<Node> q;
+	for (int j = 0; j < m; j++)
+	{
+		q.push(Node(0, j));
+		visit[0][j] = true;
+	}
+
+	while (!q.empty())
+	{
+		int x = q.front().x;
+		int y = q.front().y;
+		if (x == n - 1)
+		{
+			return true;
+		}
+		q.pop();
+		int x1 = 0;int y1 = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			switch (i)
+			{
+			case 0:
+				x1 = x;
+				y1 = y - 1;
+				break;
+			case 1:
+				x1 = x - 1;
+				y1 = y;
+				break;
+			case 2:
+				x1 = x;
+				y1 = y + 1;
+				break;
+			case 3:
+				x1 = x + 1;
+				y1 = y;
+				break;
+			}
+			if ( x1>= 0 && y1 >= 0 && x1 < n && y1 < m && p[x1][y1] <= mai&&visit[x1][y1]==false)
+			{
+				q.push(Node(x1, y1));
+				visit[x1][y1] = true;
+			}
+		}
+	}
+
+	return false;
+}
+
+int findMinHurt(int p[][M], int n, int m)
+{
+	int left = 0; int right = 0; int mid = 0;
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			right = max(right, p[i][j]);
+		}
+	}
+	int answer = 0;
+	while(left<=right)
+	{
+		mid = (left + right) / 2;
+		if (check(p, mid, n, m))
+		{
+			answer = mid;
+			right = mid-1;
+		}
+		else
+		{
+			left = mid + 1;
+		}
+	}
+	return answer;
+}
+
+int main()
+{
+	int n, m;
+	cin >> n >> m;
+	int p[1001][1001];
+
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			cin >> p[i][j];
+		}
+	}
+
+	int result=findMinHurt(p,n,m);
+
+	cout << result;
+}
