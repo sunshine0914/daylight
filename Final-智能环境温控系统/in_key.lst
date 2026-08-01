@@ -1,0 +1,136 @@
+C51 COMPILER V9.01   IN_KEY                                                                07/30/2026 21:47:46 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE IN_KEY
+OBJECT MODULE PLACED IN in_key.obj
+COMPILER INVOKED BY: E:\C51\BIN\C51.EXE 独立按键输入\in_key.c BROWSE INCDIR(.\AT24C02 EEPROM IIC 总线;.\MAIN;.\PUBLIC;.\
+                    -DS1302 实时时钟;.\DS18B20 单总线温度传感器;.\LCD1602 液晶驱动;.\NEC 红外接收解码;.\UART 串口通信 + RS485 总线;.\五线四相
+                    -步进电机驱动;.\独立按键输入;.\蜂鸣器 + 风扇直流开关输出;.\LCD1602 液晶驱动) DEBUG OBJECTEXTEND PRINT(.\in_key.lst) OBJEC
+                    -T(in_key.obj)
+
+line level    source
+
+   1          #include "in_key.h"
+   2          #include "bus.h"
+   3          #include "at24c02.h"
+   4          
+   5          u8 key_scan(void)
+   6          {
+   7   1          static u8 key=1;
+   8   1      
+   9   1          if(key==1 && (K1==0 || K2==0 || K3==0 || K4==0))
+  10   1          {
+  11   2              Delay10us(50);
+  12   2              key=0;
+  13   2              if(K1==0)
+  14   2                  return K1_PRESS;
+  15   2              else if(K2==0)
+  16   2                  return K2_PRESS;
+  17   2              else if(K3==0)
+  18   2                  return K3_PRESS;
+  19   2              else if(K4==0)
+  20   2                  return K4_PRESS;
+  21   2          }
+  22   1          else if(K1==1 && K2==1 && K3==1 && K4==1)
+  23   1          {
+  24   2              key=1;
+  25   2          }
+  26   1          return K_UNPRESS;
+  27   1      }
+  28          
+  29          void key_press_function()
+  30          {
+  31   1              u8 now_key;
+  32   1              now_key=key_scan();
+  33   1      
+  34   1              if(now_key==K_UNPRESS) return ;
+  35   1      
+  36   1      
+  37   1              switch(now_key)
+  38   1              {
+  39   2                      case K1_PRESS:
+  40   2                              if(page==1)page=0;
+  41   2                              else page=1;
+  42   2                              page_change=1;
+  43   2                              break;
+  44   2      
+  45   2                      case K2_PRESS:
+  46   2                          if(max_temper<50)
+  47   2                              {
+  48   3                                      max_temper++;
+  49   3                                      bus_save_param(); 
+  50   3                              }
+  51   2      
+  52   2                              break;
+C51 COMPILER V9.01   IN_KEY                                                                07/30/2026 21:47:46 PAGE 2   
+
+  53   2      
+  54   2                      case K3_PRESS:
+  55   2                              if(min_temper>0)
+  56   2                              {
+  57   3                                      min_temper--;
+  58   3                                      bus_save_param(); 
+  59   3                              }
+  60   2                              break;
+  61   2      
+  62   2                      case K4_PRESS:
+  63   2                              max_temper = 30;
+  64   2                              min_temper = 20;
+  65   2                              bus_save_param();
+  66   2                          page=0;
+  67   2                              page_change=1;
+  68   2                              break; 
+  69   2              }
+  70   1              
+  71   1      }
+  72          
+  73          
+  74          
+  75          
+  76          
+  77          
+  78          
+  79          
+  80          
+  81          
+  82          
+  83          
+  84          
+  85          
+  86          
+  87          
+  88          
+  89          
+  90          
+  91          
+  92          
+  93          
+  94          
+  95          
+  96          
+  97          
+  98          
+  99          
+ 100          
+ 101          
+ 102          
+ 103          
+ 104          
+ 105          
+ 106          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    145    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+C51 COMPILER V9.01   IN_KEY                                                                07/30/2026 21:47:46 PAGE 3   
+
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

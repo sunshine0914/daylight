@@ -1,0 +1,59 @@
+C51 COMPILER V9.01   BUS                                                                   08/01/2026 00:45:14 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE BUS
+OBJECT MODULE PLACED IN bus.obj
+COMPILER INVOKED BY: E:\C51\BIN\C51.EXE AT24C02 EEPROM IIC 总线\bus.c BROWSE INCDIR(.\AT24C02 EEPROM IIC 总线;.\MAIN;.\P
+                    -UBLIC;.\DS1302 实时时钟;.\DS18B20 单总线温度传感器;.\LCD1602 液晶驱动;.\NEC 红外接收解码;.\UART 串口通信 + RS485 总线;.\
+                    -五线四相步进电机驱动;.\独立按键输入;.\蜂鸣器 + 风扇直流开关输出;.\LCD1602 液晶驱动) DEBUG OBJECTEXTEND PRINT(.\bus.lst) 
+                    -OBJECT(bus.obj)
+
+line level    source
+
+   1          #include "bus.h"
+   2          #include "at24c02.h"
+   3          
+   4          void bus_init(void)
+   5          {
+   6   1              u8 buf_max;//高温放在0x00
+   7   1              u8 buf_min;//低温放在0x01
+   8   1      
+   9   1              Delay1ms(20); 
+  10   1      
+  11   1          buf_max=at24c02_read_byte(max_temper_add);
+  12   1              buf_min=at24c02_read_byte(min_temper_add);
+  13   1      
+  14   1              if(buf_max==0xff&&buf_min==0xff)
+  15   1              {
+  16   2                      at24c02_write_one_byte(0x00,30);
+  17   2                      at24c02_write_one_byte(0x01,20);
+  18   2      
+  19   2                      max_temper=30;
+  20   2                      min_temper=20;
+  21   2              }
+  22   1              else
+  23   1              {
+  24   2                      max_temper=buf_max;
+  25   2                      min_temper=buf_min;
+  26   2              }
+  27   1      }
+  28          
+  29          void bus_save_param(void)
+  30          {
+  31   1              at24c02_write_one_byte(0x00,max_temper);
+  32   1              at24c02_write_one_byte(0x01,min_temper);
+  33   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     73    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

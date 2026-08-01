@@ -1,0 +1,15 @@
+"public.obj",
+"at24c02.obj",
+"iic.obj",
+"bus.obj",
+"ds18b20.obj",
+"ds1302.obj",
+"lcd1602.obj",
+"ired.obj",
+"in_key.obj",
+"buzzer_fan.obj",
+"main.obj",
+"smg.obj",
+"key.obj" 
+TO "Final-智能环境温控系统" 
+RAMSIZE(256) 

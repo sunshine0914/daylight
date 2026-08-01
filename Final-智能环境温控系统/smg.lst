@@ -1,0 +1,61 @@
+C51 COMPILER V9.01   SMG                                                                   07/30/2026 21:47:46 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE SMG
+OBJECT MODULE PLACED IN smg.obj
+COMPILER INVOKED BY: E:\C51\BIN\C51.EXE MAIN\smg.c BROWSE INCDIR(.\AT24C02 EEPROM IIC ×ÜÏß;.\MAIN;.\PUBLIC;.\DS1302 ÊµÊ±
+                    -Ê±ÖÓ;.\DS18B20 µ¥×ÜÏßÎÂ¶È´«¸ÐÆ÷;.\LCD1602 Òº¾§Çý¶¯;.\NEC ºìÍâ½ÓÊÕ½âÂë;.\UART ´®¿ÚÍ¨ÐÅ + RS485 ×ÜÏß;.\ÎåÏßËÄÏà²½½øµç»úÇý¶
+                    -¯;.\¶ÀÁ¢°´¼üÊäÈë;.\·äÃùÆ÷ + ·çÉÈÖ±Á÷¿ª¹ØÊä³ö;.\LCD1602 Òº¾§Çý¶¯) DEBUG OBJECTEXTEND PRINT(.\smg.lst) OBJECT(smg.obj)
+
+line level    source
+
+   1          #include "smg.h"
+   2          
+   3          //¹²Òõ¼«ÊýÂë¹ÜÏÔÊ¾0~FµÄ¶ÎÂëÊý¾Ý
+   4          u8 gsmg_code[17]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,
+   5                                          0x7f,0x6f,0x77,0x7c,0x39,0x5e,0x79,0x71};
+   6          
+   7          /*******************************************************************************
+   8          * º¯ Êý Ãû       : smg_display
+   9          * º¯Êý¹¦ÄÜ               : ¶¯Ì¬ÊýÂë¹ÜÏÔÊ¾
+  10          * Êä    Èë       : dat£ºÒªÏÔÊ¾µÄÊý¾Ý
+  11                                             pos£º´Ó×ó¿ªÊ¼µÚ¼¸¸öÎ»ÖÃ¿ªÊ¼ÏÔÊ¾£¬·¶Î§1-8
+  12          * Êä    ³ö       : ÎÞ
+  13          *******************************************************************************/
+  14          void smg_display(u8 dat[],u8 pos)
+  15          {
+  16   1              u8 i=0;
+  17   1              u8 pos_temp=pos-1;
+  18   1      
+  19   1              for(i=pos_temp;i<8;i++)
+  20   1              {
+  21   2                      switch(i)//Î»Ñ¡
+  22   2                      {
+  23   3                              case 0: LSC=1;LSB=1;LSA=1;break;
+  24   3                              case 1: LSC=1;LSB=1;LSA=0;break;
+  25   3                              case 2: LSC=1;LSB=0;LSA=1;break;
+  26   3                              case 3: LSC=1;LSB=0;LSA=0;break;
+  27   3                              case 4: LSC=0;LSB=1;LSA=1;break;
+  28   3                              case 5: LSC=0;LSB=1;LSA=0;break;
+  29   3                              case 6: LSC=0;LSB=0;LSA=1;break;
+  30   3                              case 7: LSC=0;LSB=0;LSA=0;break;
+  31   3                      }
+  32   2                      SMG_A_DP_PORT=dat[i-pos_temp];//´«ËÍ¶ÎÑ¡Êý¾Ý
+  33   2                      Delay10us(100);//ÑÓÊ±Ò»¶ÎÊ±¼ä£¬µÈ´ýÏÔÊ¾ÎÈ¶¨
+  34   2                      SMG_A_DP_PORT=0x00;//ÏûÒô
+  35   2              }
+  36   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    146    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     17       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

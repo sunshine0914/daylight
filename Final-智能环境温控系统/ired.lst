@@ -1,0 +1,228 @@
+C51 COMPILER V9.01   IRED                                                                  08/01/2026 00:45:14 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE IRED
+OBJECT MODULE PLACED IN ired.obj
+COMPILER INVOKED BY: E:\C51\BIN\C51.EXE NEC 红外接收解码\ired.c BROWSE INCDIR(.\AT24C02 EEPROM IIC 总线;.\MAIN;.\PUBLIC;
+                    -.\DS1302 实时时钟;.\DS18B20 单总线温度传感器;.\LCD1602 液晶驱动;.\NEC 红外接收解码;.\UART 串口通信 + RS485 总线;.\五线四
+                    -相步进电机驱动;.\独立按键输入;.\蜂鸣器 + 风扇直流开关输出;.\LCD1602 液晶驱动) DEBUG OBJECTEXTEND PRINT(.\ired.lst) OBJEC
+                    -T(ired.obj)
+
+line level    source
+
+   1          #include "ired.h"
+   2          
+   3          u8 gired_data[4];
+   4          bit ir_rec_ok=0;
+   5          u8 ir_key_code=0;
+   6          
+   7          void ired_init(void)
+   8          {
+   9   1              IT0 = 1;
+  10   1              EX0 = 1;
+  11   1              EA = 1;
+  12   1              IRED = 1;
+  13   1          ir_rec_ok = 0;
+  14   1          ir_key_code = 0;
+  15   1              gired_data[1] = gired_data[2] = gired_data[3] = gired_data[0] = 0;
+  16   1      }
+  17          
+  18          
+  19          void ired(void) interrupt 0
+  20          {
+  21   1              u8 i = 0;
+  22   1              u8 j = 0;
+  23   1              u16 time_cnt = 0;
+  24   1              u8 ired_high_time = 0;
+  25   1              if (IRED == 0)
+  26   1              {
+  27   2                      time_cnt = 1000;
+  28   2                      while ((!IRED) && (time_cnt))
+  29   2                      {
+  30   3                              Delay10us(1);
+  31   3                              time_cnt--;
+  32   3                              if (time_cnt == 0)return;
+  33   3                      }
+  34   2      
+  35   2                      if (IRED)
+  36   2                      {
+  37   3                              time_cnt = 500;
+  38   3                              while (IRED&& time_cnt)
+  39   3                              {
+  40   4                                      Delay10us(1);
+  41   4                                      time_cnt--;
+  42   4                                      if (time_cnt == 0)return;
+  43   4                              }
+  44   3                              for (i = 0; i < 4; i++)
+  45   3                              {
+  46   4                                      for (j = 0; j < 8; j++)
+  47   4                                      {
+  48   5                                              time_cnt = 600;
+  49   5                                              while (IRED == 0 && time_cnt)
+  50   5                                              {
+  51   6                                                      Delay10us(1);
+  52   6                                                      time_cnt--;
+C51 COMPILER V9.01   IRED                                                                  08/01/2026 00:45:14 PAGE 2   
+
+  53   6                                                      if (time_cnt == 0) return;
+  54   6                                              }
+  55   5                                              time_cnt = 20;
+  56   5                                              while (IRED)
+  57   5                                              {
+  58   6                                                      Delay10us(10);
+  59   6                                                      ired_high_time++;
+  60   6                                                      if (ired_high_time > 20)return;
+  61   6                                              }
+  62   5                                              gired_data[i] >>= 1;
+  63   5                                              if (ired_high_time >= 8)
+  64   5                                              {
+  65   6                                                      gired_data[i] |= 0x80;
+  66   6                                              }
+  67   5                                              ired_high_time = 0;
+  68   5                                      }
+  69   4                              }
+  70   3                      }
+  71   2                      if (gired_data[2] != ~gired_data[3])
+  72   2                      {
+  73   3                              for (i = 0; i < 4; i++)
+  74   3                              {
+  75   4                                      gired_data[i] = 0;
+  76   4                              }
+  77   3                              return;
+  78   3                      }
+  79   2                      ir_key_code = gired_data[2];
+  80   2              ir_rec_ok = 1; 
+  81   2                      
+  82   2              }
+  83   1      }
+  84          
+  85          u8 IRED_Key(void)
+  86          {
+  87   1              u8 temp=0;
+  88   1              if(ir_rec_ok==1)
+  89   1              {
+  90   2                      temp=ir_key_code;
+  91   2                      ir_rec_ok=0;
+  92   2              }
+  93   1              return temp;
+  94   1      }
+  95          
+  96          void ired_function(void)
+  97          {
+  98   1              u8 key = IRED_Key();
+  99   1              if(key == 0)
+ 100   1              {
+ 101   2                      return;         // 没有按键按下，直接返回
+ 102   2              }
+ 103   1      
+ 104   1              switch(key)
+ 105   1              {               
+ 106   2                      case 0x0c:
+ 107   2                       if(page==1&&max_temper<60)
+ 108   2                       {
+ 109   3                              max_temper++;
+ 110   3                       }
+ 111   2                              break;
+ 112   2                      case 0x18:
+ 113   2                      if(page==1&&max_temper>min_temper)
+ 114   2                       {
+C51 COMPILER V9.01   IRED                                                                  08/01/2026 00:45:14 PAGE 3   
+
+ 115   3                              max_temper--;
+ 116   3                       }
+ 117   2                              break;
+ 118   2                      case 0x5e:
+ 119   2                      if(page==1)
+ 120   2                       {
+ 121   3                              max_temper=30;
+ 122   3                              if(max_temper <= min_temper)min_temper = max_temper - 1;
+ 123   3                       }
+ 124   2                              break;
+ 125   2                      case 0x08:
+ 126   2                      if(page==1&&min_temper<max_temper)
+ 127   2                       {
+ 128   3                              min_temper++;
+ 129   3                       }
+ 130   2                              break;
+ 131   2                      case 0x1c:
+ 132   2                      if(page==1&&min_temper>0)
+ 133   2                       {
+ 134   3                              min_temper--;
+ 135   3                       }
+ 136   2                              break;
+ 137   2                      case 0x5a:
+ 138   2                      if(page==1)
+ 139   2                       {
+ 140   3                              min_temper=20;if(min_temper >= max_temper)max_temper = min_temper + 1;
+ 141   3                       }
+ 142   2                              break;
+ 143   2                      case 0x19:
+ 144   2                              page=0;
+ 145   2                              page_change=1;
+ 146   2                              break;
+ 147   2                      case 0x0d:
+ 148   2                              page=1;
+ 149   2                              page_change=1;
+ 150   2                              break;
+ 151   2                      case 0x42:
+ 152   2                              fan_work();
+ 153   2                              break;
+ 154   2                      case 0x52:
+ 155   2                              fan_nowork();
+ 156   2                              break;
+ 157   2                      case 0x4a:
+ 158   2                              beep_alarm(700);
+ 159   2                              break;
+ 160   2                      case 0x16:
+ 161   2                              bus_save_param();
+ 162   2                              break;
+ 163   2                      default:
+ 164   2                          break;
+ 165   2              }
+ 166   1      }
+ 167          
+ 168          
+ 169          
+ 170          
+ 171          
+ 172          
+ 173          
+ 174          
+ 175          
+ 176          
+C51 COMPILER V9.01   IRED                                                                  08/01/2026 00:45:14 PAGE 4   
+
+ 177          
+ 178          
+ 179          
+ 180          
+ 181          
+ 182          
+ 183          
+ 184          
+ 185          
+ 186          
+ 187          
+ 188          
+ 189          
+ 190          
+ 191          
+ 192          
+ 193          
+ 194          
+ 195          
+ 196          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    538    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      5       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

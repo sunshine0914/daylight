@@ -1,0 +1,1 @@
+"MAIN\main.c" BROWSE INCDIR(.\AT24C02 EEPROM IIC 总线;.\MAIN;.\PUBLIC;.\DS1302 实时时钟;.\DS18B20 单总线温度传感器;.\LCD1602 液晶驱动;.\NEC 红外接收解码;.\UART 串口通信 + RS485 总线;.\五线四相步进电机驱动;.\独立按键输入;.\蜂鸣器 + 风扇直流开关输出;.\LCD1602 液晶驱动) DEBUG OBJECTEXTEND PRINT(.\main.lst) OBJECT(main.obj)

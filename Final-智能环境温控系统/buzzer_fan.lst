@@ -1,0 +1,52 @@
+C51 COMPILER V9.01   BUZZER_FAN                                                            07/30/2026 21:47:46 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE BUZZER_FAN
+OBJECT MODULE PLACED IN buzzer_fan.obj
+COMPILER INVOKED BY: E:\C51\BIN\C51.EXE 蜂鸣器 + 风扇直流开关输出\buzzer_fan.c BROWSE INCDIR(.\AT24C02 EEPROM IIC 总线;.
+                    -\MAIN;.\PUBLIC;.\DS1302 实时时钟;.\DS18B20 单总线温度传感器;.\LCD1602 液晶驱动;.\NEC 红外接收解码;.\UART 串口通信 + RS48
+                    -5 总线;.\五线四相步进电机驱动;.\独立按键输入;.\蜂鸣器 + 风扇直流开关输出;.\LCD1602 液晶驱动) DEBUG OBJECTEXTEND PRINT(.\
+                    -buzzer_fan.lst) OBJECT(buzzer_fan.obj)
+
+line level    source
+
+   1          #include "buzzer_fan.h"
+   2          
+   3          void buzzer_fan_init(void)
+   4          {
+   5   1          BEEP = 0;
+   6   1          buzzer_fan_port  = 0;
+   7   1      }
+   8          
+   9          
+  10          void beep_alarm(u16 stop_time)
+  11          {
+  12   1              BEEP = 1;
+  13   1              Delay10us(700);
+  14   1              BEEP = 0; 
+  15   1              Delay10us(stop_time);
+  16   1      }
+  17          
+  18          
+  19          void fan_work()
+  20          {
+  21   1              buzzer_fan_port=1;
+  22   1      }
+  23          void fan_nowork()
+  24          {
+  25   1              buzzer_fan_port=0;
+  26   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     33    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
